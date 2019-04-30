@@ -1,52 +1,78 @@
-import re
 from collections import defaultdict
-from pprint import pprint
+from random import choice, shuffle
+import re
 
-with open('Staden_link.txt') as f:
-    data = f.read()
+# def overlap(a, b):
+#     """ get the maximum overlap of a & b plus where the overlap starts """
 
-matches = re.findall(r"([A-za-z0-9]+)\/(?:([A-Za-z']+)\/)?([A-Za-z']+)\/\/", data)
-enzymes_dict = {}
-for m in matches:
-    # print(f'enzyme: {m[0]}', end=' ')
-    enzymes_dict[m[0]] = []
-    if m[1]:
-        # print(m[1])
-        enzymes_dict[m[0]].append({
-            'pattern': m[1],
-            'cut_index': m[1].index("'") if "'" in m[1] else -1,
-            'regex': m[1].replace("'", '').replace('N', '[ACGT]') 
-        })
-    if m[2]:
-        enzymes_dict[m[0]].append({
-            'pattern': m[2],
-            'cut_index': m[2].index("'") if "'" in m[2] else -1,
-            'regex': m[2].replace("'", '').replace('N', '[ACGT]') 
-        })
+#     overlaps = []
 
-with open('SeqLibrary.txt') as f:
-    data = f.readlines()
-    data = [line.strip() for line in data]
+#     for i in range(len(b)):
+#         for j in range(len(a)):
+#             if a.endswith(b[:i + 1], j):
+#                 overlaps.append((i, j))
 
-sequences = []
-for line in data:
-    if line.startswith('>'): 
-        new_sequence = ''
-        continue
-    if line == '||': 
-        sequences.append(new_sequence)
-    else:
-        new_sequence += line
-# pprint(sequences)
-         
-for i, sequence in enumerate(sequences):
-    if i > 0: continue
-    print(f'Sequence {i + 1} Results:')
-    for enzyme, enzymes_info in enzymes_dict.items():
-        cut_indices = []
-        for info in enzymes_info:
-            matches = re.finditer(info['regex'], sequence)
-            for m in matches:
-                cut_indices.append(m.start() + info['cut_index'])
-        if cut_indices:
-            print(f'{enzyme}: {cut_indices}')
+#     return max(overlaps) if overlaps else (0, -1)
+
+
+def overlap(a, b):
+    # return max(i for i in range(len(b)+1) if a.endswith(b[:i]))
+    matches = []
+    for i in range(1, len(b) + 1):
+        regex = b[:i]
+        m = re.search(fr'{regex}$', a)
+        if m: matches.append((i - 1, m.start()))
+    return max(matches) if matches else (0, -1)
+
+def readData(): # stores reads from file into readSquences List
+    sequences = []
+    with open('rand.500.1.fq', 'r') as f: 
+        for line in f:
+            line = line.strip()
+            f_letter = line[0:1]
+            if(f_letter == 'A' or f_letter == 'G' or f_letter == 'T' or f_letter =='C'):
+                sequences.append(line)
+    # print(sequences)
+    return sequences
+    
+def main(lst):
+
+    # lst = ['SGALWDV', 'GALWDVP', 'ALWDVPS', 'LWDVPSP', 'WDVPSPV', 'NONSEQUITUR']
+
+
+    shuffle(lst)  # to verify order doesn't matter
+
+    overlaps = defaultdict(list)
+
+    while len(lst) > 1:
+        overlaps.clear()
+
+        for a in lst:
+            for b in lst:
+                if a == b:
+                    continue
+
+                amount, start = overlap(a, b)
+                overlaps[amount].append((start, a, b))
+
+        maximum = max(overlaps)
+
+        if maximum == 0:
+            break
+
+        start, a, b = choice(overlaps[maximum])  # pick one among equals
+
+        lst.remove(a)
+        lst.remove(b)
+        lst.append(a[:start] + b)
+
+    print(*lst)
+
+if __name__ == "__main__":
+    sequences = readData()
+    main(sequences)
+
+    # a = 'SGALWDV'
+    # b = 'GALWDVP'
+    # print(overlap(a, b))
+    # print(overlap2(a, b))
