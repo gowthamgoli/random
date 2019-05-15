@@ -4,7 +4,8 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.preprocessing import StandardScaler
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.decomposition import PCA
-
+import seaborn as sns
+sns.set()
 scaler = StandardScaler()
 
 # get data
